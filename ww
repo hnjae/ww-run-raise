@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Usage: ww -f "window class filter" -c "run if not found" -d "desktop file name"
-# Usage: ww -fa "window title filter" -c "run if not found" -d "desktop file name"
+# Usage: ww -h
 
 TOGGLE="false"
 POSITIONAL=()
@@ -13,18 +12,18 @@ while [[ $# -gt 0 ]]; do
 		shift # past argument
 		shift # past value
 		;;
-	-c | --command)
-		COMMAND="$2"
+	-p | --process)
+		PROCESS="$2"
 		shift # past argument
 		shift # past value
 		;;
-	-f | --filter)
-		FILTERBY="$2"
+	-fc | --filter-class)
+		FILTERCLASS="$2"
 		shift # past argument
 		shift # past value
 		;;
-	-fa | --filter-alternative)
-		FILTERALT="$2"
+	-ft | --filter-title)
+		FILTERTITLE="$2"
 		shift # past argument
 		shift # past value
 		;;
@@ -43,8 +42,10 @@ while [[ $# -gt 0 ]]; do
 		;;
 	esac
 done
-
 set -- "${POSITIONAL[@]}" # restore positional parameters
+
+# use desktop entries name for filtering
+[ -z "$FILTERCLASS" ] &&  [ -n "$DESKTOP" ] && FILTERCLASS="$DESKTOP"
 
 if [ -n "$HELP" ]; then
 	cat <<EOF
@@ -53,12 +54,24 @@ ww. Utility to raise or jump an applications in KDE. It interacts with KWin usin
 Paramaters:
 
 -h  --help                show this help
--f  --filter              filter by window class
--fa --filter-alternative  filter by window title (caption)
+-fc --filter-class        filter by window class
+-ft --filter-title        filter by window title (caption)
 -t  --toggle              also minimize the window if it is already active
--c  --command             command to check if running and run if no process is found
+-p  --process             process to check if running
+-d  --desktop             desktop entry name to be executed by gtk-launch
 EOF
 	exit 0
+fi
+
+# Check condition
+if [ -z "$PROCESS" ]; then
+	echo You need to specify a process name. By -p.
+	exit 1
+fi
+
+if [ -z "$FILTERCLASS" ] && [ -z "$FILTERTITLE" ]; then
+	echo You need to specify a window filter. Either by class -fc or by title -ft
+	exit 1
 fi
 
 SCRIPT_TEMPLATE=$(
@@ -106,19 +119,12 @@ function ensure_script {
 	fi
 }
 
-if [ -z "$FILTERBY" ] && [ -z "$FILTERALT" ]; then
-	echo You need to specify a window filter. Either by class -f or by title -fa
-	exit 1
-fi
-
-IS_RUNNING=$(pgrep -o -a -f "$COMMAND" | grep -v "$CURRENT_SCRIPT_NAME")
-
-if [ -n "$IS_RUNNING" ] || [ -n "$FILTERALT" ]; then
-
-	SCRIPT_FOLDER="${XDG_CACHE_HOME:-${HOME}/.cache}/.wwscripts"
-	SCRIPT_NAME="$(echo "$FILTERBY$FILTERALT" | xxhsum -H64 | head -c 16).json"
-	SCRIPT_PATH="$SCRIPT_FOLDER$SCRIPT_NAME"
-	ensure_script "$FILTERBY" "$FILTERALT" "$TOGGLE"
+IS_RUNNING=$(pgrep -o -a -f "$PROCESS" | grep -c -v "$CURRENT_SCRIPT_NAME")
+if [ "$IS_RUNNING" != 0 ] || [ -n "$FILTERTITLE" ]; then
+	SCRIPT_FOLDER="${XDG_CACHE_HOME:-${HOME}/.cache}/wwscripts"
+	SCRIPT_NAME="$(echo "$FILTERCLASS$FILTERTITLE" | xxhsum -H64 | head -c 16).js"
+	SCRIPT_PATH="$SCRIPT_FOLDER/$SCRIPT_NAME"
+	ensure_script "$FILTERCLASS" "$FILTERTITLE" "$TOGGLE"
 
 	SCRIPT_NAME="ww$RANDOM"
 
@@ -133,7 +139,5 @@ if [ -n "$IS_RUNNING" ] || [ -n "$FILTERALT" ]; then
 	# uninstall it
 	dbus-send --session --dest=org.kde.KWin --print-reply=literal /Scripting org.kde.kwin.Scripting.unloadScript "string:$SCRIPT_NAME" >/dev/null 2>&1
 elif [ -n "$DESKTOP" ]; then
-	gtk-launch "${DESKTOP}"
-elif [ -n "$COMMAND" ]; then
-	$COMMAND &
+	exec gtk-launch "${DESKTOP}" >/dev/null 2>&1 &
 fi
