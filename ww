@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Usage: ww -f "window class filter" -c "run if not found"
 # Usage: ww -fa "window title filter" -c "run if not found"
 
@@ -8,6 +8,11 @@ while [[ $# -gt 0 ]]; do
 	key="$1"
 
 	case $key in
+	-d | --desktop)
+		DESKTOP="$2"
+		shift # past argument
+		shift # past value
+		;;
 	-c | --command)
 		COMMAND="$2"
 		shift # past argument
@@ -135,6 +140,8 @@ if [ -n "$IS_RUNNING" ] || [ -n "$FILTERALT" ]; then
 	dbus-send --session --dest=org.kde.KWin --print-reply=literal "/$ID" org.kde.kwin.Script.stop >/dev/null 2>&1
 	# uninstall it
 	dbus-send --session --dest=org.kde.KWin --print-reply=literal /Scripting org.kde.kwin.Scripting.unloadScript "string:$SCRIPT_NAME" >/dev/null 2>&1
+elif [ -n "$DESKTOP" ]; then
+        gtk-launch "${DESKTOP}"
 elif [ -n "$COMMAND" ]; then
 	$COMMAND &
 fi
