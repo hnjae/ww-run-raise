@@ -44,8 +44,8 @@ while [[ $# -gt 0 ]]; do
 done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
-# use desktop entries name for filtering
-[ -z "$FILTERCLASS" ] && [ -n "$DESKTOP" ] && FILTERCLASS="$DESKTOP"
+# use desktop entries name for filtering (when $FILTERTITLE is not provided)
+[ -z "$FILTERTITLE" ] && [ -z "$FILTERCLASS" ] && [ -n "$DESKTOP" ] && FILTERCLASS="$DESKTOP"
 
 if [ -n "$HELP" ]; then
 	cat <<EOF
