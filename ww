@@ -158,5 +158,7 @@ else
 		echo "The program is not running and the desktop name is not provided to launch a new instance."
 		exit 0
 	fi
+	echo "Launching new instance"
+	notify-send -u low -t 800 "Launching new instance of ${DESKTOP}"
 	exec gtk-launch "${DESKTOP}" >/dev/null 2>&1 &
 fi

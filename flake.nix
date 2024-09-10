@@ -31,6 +31,7 @@
           procps # provides pgrep
           xxHash # provides xxhsum
           gtk3 # provides gtk-launch
+          libnotify # provides notify-send
         ];
       in {
         devshells.default = {
