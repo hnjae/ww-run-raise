@@ -58,7 +58,7 @@ Paramaters:
 -ft --filter-title        filter by window title (caption)
 -t  --toggle              also minimize the window if it is already active
 -pn --process-name        process name to check if running
--d  --desktop             desktop entry name to be executed by gtk-launch
+-d  --desktop             desktop entry name to be executed by gtk-launch (do not include ".desktop" suffix)
 EOF
 	exit 0
 fi
