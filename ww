@@ -12,8 +12,8 @@ while [[ $# -gt 0 ]]; do
 		shift # past argument
 		shift # past value
 		;;
-	-p | --process)
-		PROCESS="$2"
+	-pn | --process-name)
+		PROCESS_NAME="$2"
 		shift # past argument
 		shift # past value
 		;;
@@ -57,14 +57,14 @@ Paramaters:
 -fc --filter-class        filter by window class
 -ft --filter-title        filter by window title (caption)
 -t  --toggle              also minimize the window if it is already active
--p  --process             process name to check if running
+-pn --process-name        process name to check if running
 -d  --desktop             desktop entry name to be executed by gtk-launch
 EOF
 	exit 0
 fi
 
 # Check condition
-if [ -z "$PROCESS" ]; then
+if [ -z "$PROCESS_NAME" ]; then
 	echo You need to specify a process name. By -p.
 	exit 1
 fi
@@ -124,7 +124,7 @@ if [ -z "$FILTERCLASS" ] && [ -z "$FILTERTITLE" ]; then
 	exit 1
 fi
 
-IS_RUNNING=$(pgrep -o -a -f "$PROCESS" | grep -c -v "$CURRENT_SCRIPT_NAME")
+IS_RUNNING=$(pgrep -o -a -f "$PROCESS_NAME" | grep -c -v "$CURRENT_SCRIPT_NAME")
 
 if [ "$IS_RUNNING" != 0 ] || [ -n "$FILTERTITLE" ]; then
 	SCRIPT_FOLDER="${XDG_CACHE_HOME:-${HOME}/.cache}/wwscripts"
