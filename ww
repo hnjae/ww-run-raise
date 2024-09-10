@@ -45,7 +45,7 @@ done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
 # use desktop entries name for filtering
-[ -z "$FILTERCLASS" ] &&  [ -n "$DESKTOP" ] && FILTERCLASS="$DESKTOP"
+[ -z "$FILTERCLASS" ] && [ -n "$DESKTOP" ] && FILTERCLASS="$DESKTOP"
 
 if [ -n "$HELP" ]; then
 	cat <<EOF
@@ -57,7 +57,7 @@ Paramaters:
 -fc --filter-class        filter by window class
 -ft --filter-title        filter by window title (caption)
 -t  --toggle              also minimize the window if it is already active
--p  --process             process to check if running
+-p  --process             process name to check if running
 -d  --desktop             desktop entry name to be executed by gtk-launch
 EOF
 	exit 0
@@ -77,23 +77,23 @@ fi
 SCRIPT_TEMPLATE=$(
 	cat <<EOF
 function kwinactivateclient(clientClass, clientCaption, toggle) {
-  var clients = workspace.clientList();
-  var compareToCaption = new RegExp(clientCaption || '', 'i');
-  var compareToClass = clientClass;
-  var isCompareToClass = clientClass.length > 0
-  for (var i=0; i<clients.length; i++) {
-      var client = clients[i];
-      var classCompare = (isCompareToClass && client.resourceClass == compareToClass)
-      var captionCompare = (!isCompareToClass && compareToCaption.exec(client.caption))
-      if (classCompare || captionCompare) {
-          if (workspace.activeClient != client) {
-              workspace.activeClient = client;
-          } else if (toggle) {
-              client.minimized = true;
-          }
-          break;
-      }
-  }
+    var clients = workspace.windowList();
+    var compareToCaption = new RegExp(clientCaption || '', 'i');
+    var compareToClass = clientClass;
+    var isCompareToClass = clientClass.length > 0
+    for (var i = 0; i < clients.length; i++) {
+        var client = clients[i];
+        var classCompare = (isCompareToClass && client.resourceClass == compareToClass)
+        var captionCompare = (!isCompareToClass && compareToCaption.exec(client.caption))
+        if (classCompare || captionCompare) {
+            if (workspace.activeWindow != client) {
+                workspace.activeWindow = client;
+            } else if (toggle) {
+                client.minimized = true;
+            }
+            break;
+        }
+    }
 }
 kwinactivateclient('CLASS_NAME', 'CAPTION_NAME', TOGGLE);
 EOF
@@ -119,25 +119,33 @@ function ensure_script {
 	fi
 }
 
+if [ -z "$FILTERCLASS" ] && [ -z "$FILTERTITLE" ]; then
+	echo You need to specify a window filter. Either by class -fc or by title -ft
+	exit 1
+fi
+
 IS_RUNNING=$(pgrep -o -a -f "$PROCESS" | grep -c -v "$CURRENT_SCRIPT_NAME")
+
 if [ "$IS_RUNNING" != 0 ] || [ -n "$FILTERTITLE" ]; then
 	SCRIPT_FOLDER="${XDG_CACHE_HOME:-${HOME}/.cache}/wwscripts"
+
 	SCRIPT_NAME="$(echo "$FILTERCLASS$FILTERTITLE" | xxhsum -H64 | head -c 16).js"
 	SCRIPT_PATH="$SCRIPT_FOLDER/$SCRIPT_NAME"
 	ensure_script "$FILTERCLASS" "$FILTERTITLE" "$TOGGLE"
 
-	SCRIPT_NAME="ww$RANDOM"
-
 	# install the script
-	ID=$(dbus-send --session --dest=org.kde.KWin --print-reply=literal /Scripting org.kde.kwin.Scripting.loadScript "string:$SCRIPT_PATH" "string:$SCRIPT_NAME" | awk '{print $2}')
-	# run it - some KDEs version use Script.run others Scripting.run
-	dbus-send --session --dest=org.kde.KWin --print-reply=literal "/$ID" org.kde.kwin.Scripting.run >/dev/null 2>&1
-	dbus-send --session --dest=org.kde.KWin --print-reply=literal "/$ID" org.kde.kwin.Script.run >/dev/null 2>&1
-	# stop it - some KDEs version use Script.run others Scripting.run
-	dbus-send --session --dest=org.kde.KWin --print-reply=literal "/$ID" org.kde.kwin.Scripting.stop >/dev/null 2>&1
-	dbus-send --session --dest=org.kde.KWin --print-reply=literal "/$ID" org.kde.kwin.Script.stop >/dev/null 2>&1
-	# uninstall it
-	dbus-send --session --dest=org.kde.KWin --print-reply=literal /Scripting org.kde.kwin.Scripting.unloadScript "string:$SCRIPT_NAME" >/dev/null 2>&1
+	ID=$(dbus-send --session --print-reply --dest=org.kde.KWin /Scripting org.kde.kwin.Scripting.loadScript "string:$SCRIPT_PATH" "string:$SCRIPT_NAME" | awk 'END {print $2}')
+
+	# run the script
+	dbus-send --session --print-reply --dest=org.kde.KWin /Scripting/Script"$ID" org.kde.kwin.Script.run >/dev/null 2>&1
+	dbus-send --session --print-reply --dest=org.kde.KWin /Scripting/Script"$ID" org.kde.kwin.Scripting.run >/dev/null 2>&1
+	# stop the script
+	dbus-send --session --print-reply --dest=org.kde.KWin /Scripting/Script"$ID" org.kde.kwin.Script.stop >/dev/null 2>&1
+	dbus-send --session --print-reply --dest=org.kde.KWin /Scripting/Script"$ID" org.kde.kwin.Scripting.stop >/dev/null 2>&1
+
+	# uninstall the script
+	dbus-send --session --print-reply --dest=org.kde.KWin /Scripting org.kde.kwin.Scripting.unloadScript "string:$SCRIPT_NAME" >/dev/null 2>&1
+
 elif [ -n "$DESKTOP" ]; then
 	exec gtk-launch "${DESKTOP}" >/dev/null 2>&1 &
 fi
