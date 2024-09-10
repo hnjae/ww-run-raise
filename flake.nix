@@ -26,15 +26,25 @@
         "x86_64-linux"
         "aarch64-linux"
       ];
-      perSystem = {pkgs, ...}: {
+      perSystem = {pkgs, ...}: let
+        runtimeInputs = with pkgs; [
+          procps # provides pgrep
+          xxHash # provides xxhsum
+          gtk3 # provides gtk-launch
+        ];
+      in {
         devshells.default = {
           env = [];
           commands = [];
-          packages = with pkgs; [
-            procps # provides pgrep
-            xxHash # provides xxhsum
-            gtk3 # provides gtk-launch
-          ];
+          packages = runtimeInputs;
+        };
+
+        packages = {
+          default = pkgs.writeShellApplication {
+            name = "ww";
+            inherit runtimeInputs;
+            text = builtins.readFile ./ww;
+          };
         };
       };
     };
