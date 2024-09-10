@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 # Usage: ww -h
+# e.g.: ww -pn firefox -d firefox
 
+# set -o nounset 대응
 TOGGLE="false"
+PROCESS_NAME=""
+FILTERCLASS=""
+FILTERTITLE=""
+HELP=""
+
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
 	key="$1"
@@ -124,7 +131,7 @@ if [ -z "$FILTERCLASS" ] && [ -z "$FILTERTITLE" ]; then
 	exit 1
 fi
 
-IS_RUNNING=$(pgrep -o -a -f "$PROCESS_NAME" | grep -c -v "$CURRENT_SCRIPT_NAME")
+IS_RUNNING=$(pgrep -o -a -f "$PROCESS_NAME" | grep -c -v "$CURRENT_SCRIPT_NAME" || true)
 
 if [ "$IS_RUNNING" != 0 ] || [ -n "$FILTERTITLE" ]; then
 	SCRIPT_FOLDER="${XDG_CACHE_HOME:-${HOME}/.cache}/wwscripts"
@@ -137,14 +144,14 @@ if [ "$IS_RUNNING" != 0 ] || [ -n "$FILTERTITLE" ]; then
 	ID=$(dbus-send --session --print-reply --dest=org.kde.KWin /Scripting org.kde.kwin.Scripting.loadScript "string:$SCRIPT_PATH" "string:$SCRIPT_NAME" | awk 'END {print $2}')
 
 	# run the script
-	dbus-send --session --print-reply --dest=org.kde.KWin /Scripting/Script"$ID" org.kde.kwin.Script.run >/dev/null 2>&1
-	dbus-send --session --print-reply --dest=org.kde.KWin /Scripting/Script"$ID" org.kde.kwin.Scripting.run >/dev/null 2>&1
+	dbus-send --session --print-reply --dest=org.kde.KWin /Scripting/Script"$ID" org.kde.kwin.Script.run >/dev/null 2>&1 || true
+	dbus-send --session --print-reply --dest=org.kde.KWin /Scripting/Script"$ID" org.kde.kwin.Scripting.run >/dev/null 2>&1 || true
 	# stop the script
-	dbus-send --session --print-reply --dest=org.kde.KWin /Scripting/Script"$ID" org.kde.kwin.Script.stop >/dev/null 2>&1
-	dbus-send --session --print-reply --dest=org.kde.KWin /Scripting/Script"$ID" org.kde.kwin.Scripting.stop >/dev/null 2>&1
+	dbus-send --session --print-reply --dest=org.kde.KWin /Scripting/Script"$ID" org.kde.kwin.Script.stop >/dev/null 2>&1 || true
+	dbus-send --session --print-reply --dest=org.kde.KWin /Scripting/Script"$ID" org.kde.kwin.Scripting.stop >/dev/null 2>&1 || true
 
 	# uninstall the script
-	dbus-send --session --print-reply --dest=org.kde.KWin /Scripting org.kde.kwin.Scripting.unloadScript "string:$SCRIPT_NAME" >/dev/null 2>&1
+	dbus-send --session --print-reply --dest=org.kde.KWin /Scripting org.kde.kwin.Scripting.unloadScript "string:$SCRIPT_NAME" >/dev/null 2>&1 || true
 
 else
 	if [ -z "$DESKTOP" ]; then
