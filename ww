@@ -126,11 +126,6 @@ function ensure_script {
 	fi
 }
 
-if [ -z "$FILTERCLASS" ] && [ -z "$FILTERTITLE" ]; then
-	echo You need to specify a window filter. Either by class -fc or by title -ft
-	exit 1
-fi
-
 IS_RUNNING=$(pgrep -o -a -f "$PROCESS_NAME" | grep -c -v "$CURRENT_SCRIPT_NAME" || true)
 
 if [ "$IS_RUNNING" != 0 ] || [ -n "$FILTERTITLE" ]; then
