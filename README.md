@@ -2,67 +2,79 @@ ww. Utility to raise or jump an applications in KDE. It interacts with KWin usin
 
 # Installing
 
-* Download ww from this repository
-* Copy `ww` into your path. e.g.:
+## Using non-nix distro
 
-```bash
+1. Download ww from this repository
+2. Copy `ww` into your path. e.g.:
+
+```sh
 cp ww /usr/local/bin
 ```
 
-Feel free to rename it
+Do not forget to install required packages. Read `flake.nix`'s `runtimeInputs` elements for requirements.
+
+## Using `flake.nix`
+
+Add this repo to your `flake.nix`:
+
+```nix
+{
+  inputs = {
+    # ...
+    ww-run-raise = {
+      url = "github:hnjae/ww-run-raise";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-parts.follows = "flake-parts";
+        devshell.follows = "devshell";
+      };
+    };
+  }
+
+  # ...
+}
+```
+
+Add the `default` package to your system. If using home-manager:
+
+```nix
+  home.packages = [
+    inputs.ww-run-raise.packages.${pkgs.stdenv.system}.default
+  ];
+```
 
 # Usage
 
-ww only works in KDE. It works in X11 and Wayland.
+ww only works in KDE. It works in X11 and Wayland. Run `ww -h` to list parameters.
 
-## Example
-
-if you want to raise or jump to an open firefox window:
-
-`ww -f firefox -c firefox`
-
-if you want to raise or jump to an app with an specific class:
-
-`ww -f kitty.terminal -c 'kitty --class kitty.terminal'`
-
-Note: In this example `kitty` allows you to pass the `class` option that sets the window class.
-This is a kitty feature, not a ww feature.
-
-If you want to raise any window that matches a title. JS regexp allowed:
-
-`ww -fa 'Zoom meeting'`
-
-## Paramaters:
-```
--h  --help                show this help
--f  --filter              filter by window class
--fa --filter-alternative  filter by window title (caption)
--c  --command             command to check if running and run if no process is found
-```
-
-# Create shortcuts
+## Create shortcuts
 
 You can use KDE custom shortcuts to add a custom shortcut that calls ww
 
 ![image](https://user-images.githubusercontent.com/227916/126187702-90105aff-32a4-48dd-95c9-a7c1a2623c9e.png)
 
+## Using plasma-manager
 
-# How does it work?
+Following is my snippets using `ww` with plasma-manager:
 
-Internally ww uses 2 main things to work: `pgrep` and "on demand" KWin scripts.
+```nix
+  xdg.desktopEntries."ww-terminal" = {
+    name = "ww-terminal";
+    exec = "ww -pn konsole -fc org.kde.konsole -d org.kde.konsole";
+    type = "Application";
+    noDisplay = true;
+    startupNotify = false;
+    settings = {
+      "X-KDE-GlobalAccel-CommandShortcut" = "true";
+    };
+  };
 
-When you run, for example `ww -f firefox c -firefox`, ww tries to find a process running with the exact command:
-
-`pgrep -o -f firefox`
-
-This detects if the application is running or not.
-
-Then ww creates a file inside `~/.wwscripts` to store a temporary kwin script, it loads the script, runs it, stops it and unloads it in a single go.
-
-The kwin script is targeted to find and focus a specific window.
+  programs.plasma.shortcuts."services/ww-terminal.desktop"."_launch" = "Meta+E";
+```
 
 # TODO
+
 Here some ideas of improvements that I'd like to explore, but my knowledge on kwin scripts doesn't allow me:
 
-* Do not depend on pgrep to detect if an application is open?
 * Use a single kwin script with signals instead of loading and running one each time?
+* pgrep 로 검색하지 말고, kwin 에게 물어서 윈도우가 켜져 있는지 확인할 것.
