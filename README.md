@@ -91,4 +91,5 @@ It seems that KDE's custom shortcuts work by executing desktop entries, which ca
 Here some ideas of improvements that I'd like to explore, but my knowledge on kwin scripts doesn't allow me:
 
 * Use a single kwin script with signals instead of loading and running one each time?
-* pgrep 로 검색하지 말고, kwin 에게 물어서 윈도우가 켜져 있는지 확인할 것.
+* Do not use pgrep to search. Instead, ask kwin to check if a window is open.
+* Limit the search to the current desktop/activities.
