@@ -15,6 +15,8 @@ Do not forget to install required packages. Read `flake.nix`'s `runtimeInputs` e
 
 ## Using `flake.nix`
 
+**I highly recommend pinning or forking this repository, because its behavior can be changed at any time.**
+
 Add this repo to your `flake.nix`:
 
 ```nix
