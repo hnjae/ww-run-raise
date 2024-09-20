@@ -74,6 +74,18 @@ Following is my snippets using `ww` with plasma-manager:
   programs.plasma.shortcuts."services/ww-terminal.desktop"."_launch" = "Meta+E";
 ```
 
+## Limitation
+
+It seems that instances launched with the custom shortcut `ww` in KDE are recognized as a different app from original app. In my environment, when I run `flatpak permissions desktop-used-apps`, both `ww-terminal` and `org.kde.konsole` are listed as registered apps:
+
+```
+Table             Object                                  App                    Permissions        Data
+desktop-used-apps video/quicktime                         org.kde.konsole        mpv,3,3            0x00
+desktop-used-apps video/quicktime                         ww-terminal            mpv,3,3            0x00
+```
+
+It seems that KDE's custom shortcuts work by executing desktop entries, which causes these.
+
 # TODO
 
 Here some ideas of improvements that I'd like to explore, but my knowledge on kwin scripts doesn't allow me:
