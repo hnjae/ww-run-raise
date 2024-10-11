@@ -72,7 +72,7 @@ fi
 
 # Check condition
 if [ -z "$PROCESS_NAME" ]; then
-	echo You need to specify a process name. By -p.
+	echo You need to specify a process name. By -pn.
 	exit 1
 fi
 
