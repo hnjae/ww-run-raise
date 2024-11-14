@@ -55,7 +55,7 @@ You can use KDE custom shortcuts to add a custom shortcut that calls ww
 
 ![image](https://user-images.githubusercontent.com/227916/126187702-90105aff-32a4-48dd-95c9-a7c1a2623c9e.png)
 
-## Using plasma-manager
+### Using plasma-manager
 
 Following is my snippets using `ww` with plasma-manager:
 
